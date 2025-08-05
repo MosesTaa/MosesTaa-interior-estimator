@@ -155,7 +155,6 @@
   let user = {}, walls = [], wallData = [], currentWall = 0;
   const FEET_TO_METERS = 0.3048;
   const undercoatRate = 9;
-  const topcoatRate = 9;
 
   document.getElementById('projectType').addEventListener('change', () => {
     document.getElementById('skimmingGroup').classList.remove('hidden');
@@ -335,7 +334,7 @@
     let html = '<table><tr><th>Wall</th><th>Area (m²)</th>';
     const showSkim = user.skimming === 'yes';
     if (showSkim) html += '<th>Skim Coat</th>';
-    html += '<th>Undercoat</th><th>Topcoat</th></tr>';
+    html += '<th>Undercoat</th><th>Silk Topcoat</th></tr>';
 
     let total = { area: 0, skim: 0, under: 0, top: 0 };
 
@@ -346,10 +345,15 @@
       if (w.windows > 0) deduct += w.windows * w.winW * w.winH;
       const netArea = area - deduct;
 
-      const skimSpread = user.project === 'new' ? 16 : 20;
-      const skim = showSkim ? netArea / skimSpread : 0;
-      const under = netArea / undercoatRate;
-      const top = (netArea * 2) / topcoatRate;
+      // Skim Coat: 2 bags per 100 m² => 1 bag per 50 m²
+      const skim = showSkim ? netArea / 50 : 0;
+
+      // Undercoat: 9 m²/L, 2 coats
+      const under = (netArea * 2) / undercoatRate;
+
+      // Silk Topcoat: 10 m²/L, 1 coat
+      const silkRate = 10;
+      const top = netArea / silkRate;
 
       total.area += netArea;
       total.skim += skim;
@@ -391,4 +395,4 @@
   }
 </script>
 </body>
-          </html>
+</html>
