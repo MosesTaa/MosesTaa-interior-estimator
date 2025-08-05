@@ -248,7 +248,7 @@
     document.getElementById('wallDimensionForm').innerHTML = `
       <h3>${r}</h3>
       <label>Length (${label})</label><input type="number" id="length" value="${existing.length || ''}">
-      <label>Width (${label})</label><input type="number" id="width" value="${existing.width || ''}">
+      <label>Width (${label}, enter 0 if unknown)</label><input type="number" id="width" value="${existing.width || ''}">
       <label>Height (${label})</label><input type="number" id="height" value="${existing.height || ''}">
       <label>Doors</label><input type="number" id="doors" value="${existing.doors || 0}">
       <label>Avg Door Width (${label})</label><input type="number" id="doorW" value="${existing.doorW || defaultDoorW}">
@@ -346,9 +346,9 @@
     let html = '<table><tr><th>Room</th><th>Area (m²)</th>';
     const showSkim = user.skimming === 'yes';
     if (showSkim) html += '<th>Skim Coat</th>';
-    html += '<th>Undercoat</th><th>Silk Topcoat</th><th>Doors & Windows</th></tr>';
+    html += '<th>Undercoat</th><th>Silk Topcoat</th></tr>';
 
-    let total = { area: 0, skim: 0, under: 0, top: 0, doorsWindows: 0 };
+    let total = { area: 0, skim: 0, under: 0, top: 0 };
 
     roomData.forEach(r => {
       const netArea = r.netArea;
@@ -357,28 +357,21 @@
       const silkRate = 10;
       const top = netArea / silkRate;
 
-      // New door & window paint calculation
-      const doorArea = r.doors * r.doorW * r.doorH;
-      const windowArea = r.windows * r.winW * r.winH;
-      const paintableArea = (doorArea * 2) + (0.5 * windowArea);
-      const doorWindowLitres = paintableArea / 6; // 6 m² per litre
-
       total.area += netArea;
       total.skim += skim;
       total.under += under;
       total.top += top;
-      total.doorsWindows += doorWindowLitres;
 
       html += `<tr>
         <td>${r.name}</td>
         <td>${netArea.toFixed(2)}</td>`;
       if (showSkim) html += `<td>${skim.toFixed(2)} bags</td>`;
-      html += `<td>${under.toFixed(2)}L</td><td>${top.toFixed(2)}L</td><td>${doorWindowLitres.toFixed(2)}L</td></tr>`;
+      html += `<td>${under.toFixed(2)}L</td><td>${top.toFixed(2)}L</td></tr>`;
     });
 
     html += `<tr><th>Total</th><th>${total.area.toFixed(2)}</th>`;
     if (showSkim) html += `<th>${total.skim.toFixed(2)} bags</th>`;
-    html += `<th>${total.under.toFixed(2)}L</th><th>${total.top.toFixed(2)}L</th><th>${total.doorsWindows.toFixed(2)}L</th></tr></table>`;
+    html += `<th>${total.under.toFixed(2)}L</th><th>${total.top.toFixed(2)}L</th></tr></table>`;
     document.getElementById('result').innerHTML = html;
   }
 
@@ -398,3 +391,9 @@
     document.getElementById('roomList').innerHTML = '';
     document.getElementById('roomName').value = '';
     document.getElementById('wallDimensionForm').innerHTML = '';
+    document.getElementById('previewTable').querySelector('tbody').innerHTML = '';
+    document.getElementById('result').innerHTML = '';
+  }
+</script>
+</body>
+</html>
