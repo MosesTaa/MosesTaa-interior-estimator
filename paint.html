@@ -343,37 +343,49 @@
   }
 
   function generateQuotation() {
-    let html = '<table><tr><th>Room</th><th>Area (m²)</th>';
-    const showSkim = user.skimming === 'yes';
-    if (showSkim) html += '<th>Skim Coat</th>';
-    html += '<th>Undercoat</th><th>Silk Topcoat</th></tr>';
+  let html = '<table><tr><th>Room</th><th>Area (m²)</th>';
+  const showSkim = user.skimming === 'yes';
+  if (showSkim) html += '<th>Skim Coat</th>';
+  html += '<th>Undercoat</th><th>Silk Topcoat</th><th>Door Paint (L)</th><th>Window Paint (L)</th></tr>';
 
-    let total = { area: 0, skim: 0, under: 0, top: 0 };
+  let total = { area: 0, skim: 0, under: 0, top: 0, doorPaint: 0, windowPaint: 0 };
 
-    roomData.forEach(r => {
-      const netArea = r.netArea;
-      const skim = showSkim ? netArea / 50 : 0;
-      const under = (netArea * 2) / undercoatRate;
-      const silkRate = 10;
-      const top = netArea / silkRate;
+  roomData.forEach(r => {
+    const netArea = r.netArea;
+    const skim = showSkim ? netArea / 50 : 0;
+    const under = (netArea * 2) / undercoatRate;
+    const silkRate = 10;
+    const top = netArea / silkRate;
 
-      total.area += netArea;
-      total.skim += skim;
-      total.under += under;
-      total.top += top;
+    // Door & window paint calculation
+    const doorArea = r.doors * r.doorW * r.doorH;
+    const windowArea = r.windows * r.winW * r.winH;
+    const doorPaint = (doorArea * 2) / 6;      // two coats
+    const windowPaint = (windowArea * 0.5) / 6; // 50% coverage
 
-      html += `<tr>
-        <td>${r.name}</td>
-        <td>${netArea.toFixed(2)}</td>`;
-      if (showSkim) html += `<td>${skim.toFixed(2)} bags</td>`;
-      html += `<td>${under.toFixed(2)}L</td><td>${top.toFixed(2)}L</td></tr>`;
-    });
+    total.area += netArea;
+    total.skim += skim;
+    total.under += under;
+    total.top += top;
+    total.doorPaint += doorPaint;
+    total.windowPaint += windowPaint;
 
-    html += `<tr><th>Total</th><th>${total.area.toFixed(2)}</th>`;
-    if (showSkim) html += `<th>${total.skim.toFixed(2)} bags</th>`;
-    html += `<th>${total.under.toFixed(2)}L</th><th>${total.top.toFixed(2)}L</th></tr></table>`;
-    document.getElementById('result').innerHTML = html;
-  }
+    html += `<tr>
+      <td>${r.name}</td>
+      <td>${netArea.toFixed(2)}</td>`;
+    if (showSkim) html += `<td>${skim.toFixed(2)} bags</td>`;
+    html += `<td>${under.toFixed(2)}L</td><td>${top.toFixed(2)}L</td>
+      <td>${doorPaint.toFixed(2)}L</td><td>${windowPaint.toFixed(2)}L</td></tr>`;
+  });
+
+  html += `<tr><th>Total</th><th>${total.area.toFixed(2)}</th>`;
+  if (showSkim) html += `<th>${total.skim.toFixed(2)} bags</th>`;
+  html += `<th>${total.under.toFixed(2)}L</th><th>${total.top.toFixed(2)}L</th>
+    <th>${total.doorPaint.toFixed(2)}L</th><th>${total.windowPaint.toFixed(2)}L</th></tr></table>`;
+  
+  document.getElementById('result').innerHTML = html;
+}
+
 
   function restartApp() {
     user = {};
@@ -397,4 +409,5 @@
 </script>
 </body>
 </html>
+
 
