@@ -81,7 +81,6 @@
 </head>
 <body>
 <div class="container">
-  <!-- Page 1: Add Rooms -->
   <div id="page1">
     <h2>Tiling Estimator</h2>
     <label for="name">Full Name</label>
@@ -91,7 +90,6 @@
     <button onclick="goToPage2()">Next</button>
   </div>
 
-  <!-- Page 2: Add Room Names -->
   <div id="page2" class="hidden">
     <h2>Add Rooms</h2>
     <input type="text" id="roomName" placeholder="e.g. Kitchen">
@@ -101,7 +99,6 @@
     <button onclick="goToPage3()">Next</button>
   </div>
 
-  <!-- Page 3: Room Dimensions -->
   <div id="page3" class="hidden">
     <h2>Enter Room Dimensions</h2>
     <label>Unit</label>
@@ -113,7 +110,6 @@
     <button onclick="backToPage2()">Back</button>
   </div>
 
-  <!-- Preview -->
   <div id="previewPage" class="hidden">
     <h2>Preview</h2>
     <table id="previewTable">
@@ -125,7 +121,6 @@
     <button onclick="requestQuotation()">Request Quotation (KES 200)</button>
   </div>
 
-  <!-- Results -->
   <div id="resultSection" class="hidden">
     <h2>Quotation</h2>
     <div id="result"></div>
@@ -137,6 +132,30 @@
 <script>
   let user = {}, rooms = [], roomData = [], currentRoom = 0;
   const FEET_TO_METERS = 0.3048;
+  const METERS_TO_FEET = 3.28084;
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById('unit').addEventListener('change', () => {
+      if (!document.getElementById('page3').classList.contains('hidden')) {
+        convertRoomData();
+        renderRoomDimension();
+      }
+    });
+  });
+
+  function convertRoomData() {
+    const oldUnit = roomData[currentRoom]?.unit || 'meters';
+    const newUnit = document.getElementById('unit').value;
+    if (oldUnit === newUnit) return;
+
+    const factor = newUnit === 'feet' ? METERS_TO_FEET : FEET_TO_METERS;
+    ['length', 'width', 'tileLength', 'tileWidth'].forEach(key => {
+      if (roomData[currentRoom][key]) {
+        roomData[currentRoom][key] *= factor;
+      }
+    });
+    roomData[currentRoom].unit = newUnit;
+  }
 
   function goToPage2() {
     user.name = document.getElementById('fullName').value.trim();
@@ -157,7 +176,7 @@
     const name = document.getElementById('roomName').value.trim();
     if (!name || rooms.includes(name)) return alert("Enter a unique room name.");
     rooms.push(name);
-    roomData.push({ name });
+    roomData.push({ name, unit: document.getElementById('unit').value });
     renderRooms();
     document.getElementById('roomName').value = "";
   }
@@ -209,17 +228,19 @@
     const existing = roomData[currentRoom];
     document.getElementById('roomDimensionForm').innerHTML = `
       <h3>${r}</h3>
-      <label>Length (${label})</label><input type="number" id="length" value="${existing.length || ''}">
-      <label>Width (${label})</label><input type="number" id="width" value="${existing.width || ''}">
-      <label>Tile Length (${label})</label><input type="number" id="tileLength" value="${existing.tileLength || ''}">
-      <label>Tile Width (${label})</label><input type="number" id="tileWidth" value="${existing.tileWidth || ''}">
+      <label>Length (${label})</label><input type="number" id="length" value="${existing.length?.toFixed(2) || ''}">
+      <label>Width (${label})</label><input type="number" id="width" value="${existing.width?.toFixed(2) || ''}">
+      <label>Tile Length (${label})</label><input type="number" id="tileLength" value="${existing.tileLength?.toFixed(2) || ''}">
+      <label>Tile Width (${label})</label><input type="number" id="tileWidth" value="${existing.tileWidth?.toFixed(2) || ''}">
       <label>Tiles per Box</label><input type="number" id="tilesPerBox" value="${existing.tilesPerBox || ''}">
       <button onclick="saveRoomDimension()">Save Room Data</button>
     `;
   }
 
   function saveRoomDimension() {
-    const conv = document.getElementById('unit').value === 'feet' ? FEET_TO_METERS : 1;
+    const unit = document.getElementById('unit').value;
+    const conv = unit === 'feet' ? FEET_TO_METERS : 1;
+
     const l = parseFloat(document.getElementById('length').value) * conv || 0;
     const w = parseFloat(document.getElementById('width').value) * conv || 0;
     const tl = parseFloat(document.getElementById('tileLength').value) * conv || 0;
@@ -227,7 +248,11 @@
     const tb = parseInt(document.getElementById('tilesPerBox').value) || 0;
     if (l <= 0 || w <= 0 || tl <= 0 || tw <= 0 || tb <= 0) return alert("Fill all fields with valid numbers.");
 
-    roomData[currentRoom] = { name: rooms[currentRoom], length: l, width: w, tileLength: tl, tileWidth: tw, tilesPerBox: tb };
+    roomData[currentRoom] = {
+      name: rooms[currentRoom], length: l, width: w,
+      tileLength: tl, tileWidth: tw, tilesPerBox: tb,
+      unit
+    };
 
     currentRoom++;
     if (currentRoom < rooms.length) {
