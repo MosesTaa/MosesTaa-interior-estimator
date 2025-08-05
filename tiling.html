@@ -24,7 +24,9 @@
       border: 1px solid #333;
       border-radius: 10px;
     }
-    h2, h3 { text-align: center; }
+    h2, h3 {
+      text-align: center;
+    }
     input, select, button {
       width: 100%;
       padding: 12px;
@@ -37,8 +39,8 @@
     }
     .hidden { display: none; }
     label { display: block; margin-top: 10px; font-weight: bold; }
-    table { width: 100%; margin-top: 10px; border-collapse: collapse; }
-    th, td { border: 1px solid #555; padding: 8px; text-align: center; }
+    table { width: 100%; margin-top: 10px; border-collapse: collapse; text-align: center; }
+    th, td { border: 1px solid #555; padding: 8px; word-wrap: break-word; }
     ul { list-style: none; padding: 0; }
     ul li {
       display: flex;
@@ -58,62 +60,75 @@
       color: #000;
       border: none;
       cursor: pointer;
+      display: block;
       width: 100%;
     }
-    .action-btn-container { display: flex; flex-direction: column; gap: 5px; }
-    #thankYouMessage { text-align: center; font-size: 18px; margin-top: 20px; }
+    .action-btn-container {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
     @media print {
-      button, #restartBtn { display: none !important; }
-      body, .container { background: #fff !important; color: #000 !important; }
-      #thankYouMessage { display: block; }
+      button, #restartBtn {
+        display: none !important;
+      }
+      body, .container {
+        background: #fff !important;
+        color: #000 !important;
+      }
     }
   </style>
 </head>
 <body>
 <div class="container">
-  <!-- PAGE 1 -->
+  <!-- Page 1: Add Rooms -->
   <div id="page1">
     <h2>Tiling Estimator</h2>
     <label for="name">Full Name</label>
     <input type="text" id="fullName" placeholder="Enter your name">
     <label for="email">Email Address</label>
     <input type="email" id="email" placeholder="Enter your email">
-    <h3>Add Rooms</h3>
-    <input type="text" id="roomName" placeholder="e.g. Living Room">
-    <button onclick="addRoom()">Add Room</button>
-    <ul id="roomList"></ul>
     <button onclick="goToPage2()">Next</button>
   </div>
 
-  <!-- PAGE 2 -->
+  <!-- Page 2: Add Room Names -->
   <div id="page2" class="hidden">
+    <h2>Add Rooms</h2>
+    <input type="text" id="roomName" placeholder="e.g. Kitchen">
+    <button onclick="addRoom()">Add Room</button>
+    <ul id="roomList"></ul>
+    <button onclick="backToPage1()">Back</button>
+    <button onclick="goToPage3()">Next</button>
+  </div>
+
+  <!-- Page 3: Room Dimensions -->
+  <div id="page3" class="hidden">
     <h2>Enter Room Dimensions</h2>
     <label>Unit</label>
-    <select id="unit" onchange="renderRoomDimension()">
+    <select id="unit">
       <option value="meters">Meters</option>
       <option value="feet">Feet</option>
     </select>
     <div id="roomDimensionForm"></div>
-    <button onclick="backToPage1()">Back</button>
+    <button onclick="backToPage2()">Back</button>
   </div>
 
-  <!-- PAGE 3 -->
+  <!-- Preview -->
   <div id="previewPage" class="hidden">
     <h2>Preview</h2>
     <table id="previewTable">
       <thead>
-        <tr><th>Room</th><th>Length</th><th>Width</th><th>Tile Size</th><th>Boxes</th><th>Action</th></tr>
+        <tr><th>Room</th><th>Length</th><th>Width</th><th>Tile Size</th><th>Action</th></tr>
       </thead>
       <tbody></tbody>
     </table>
     <button onclick="requestQuotation()">Request Quotation (KES 200)</button>
   </div>
 
-  <!-- PAGE 4 -->
+  <!-- Results -->
   <div id="resultSection" class="hidden">
     <h2>Quotation</h2>
     <div id="result"></div>
-    <p id="thankYouMessage">Thank you for using our tiling estimator!</p>
     <button onclick="window.print()">Print</button>
     <button id="restartBtn" onclick="restartApp()">Make Another</button>
   </div>
@@ -122,6 +137,21 @@
 <script>
   let user = {}, rooms = [], roomData = [], currentRoom = 0;
   const FEET_TO_METERS = 0.3048;
+
+  function goToPage2() {
+    user.name = document.getElementById('fullName').value.trim();
+    user.email = document.getElementById('email').value.trim();
+    if (!user.name || !/\S+@\S+\.\S+/.test(user.email)) {
+      return alert("Enter valid name and email.");
+    }
+    document.getElementById('page1').classList.add('hidden');
+    document.getElementById('page2').classList.remove('hidden');
+  }
+
+  function backToPage1() {
+    document.getElementById('page2').classList.add('hidden');
+    document.getElementById('page1').classList.remove('hidden');
+  }
 
   function addRoom() {
     const name = document.getElementById('roomName').value.trim();
@@ -155,33 +185,27 @@
       rooms[i] = newName;
       roomData[i].name = newName;
       renderRooms();
-    } else if (rooms.includes(newName)) {
-      alert("Room name must be unique.");
     }
   }
 
-  function goToPage2() {
-    user.name = document.getElementById('fullName').value.trim();
-    user.email = document.getElementById('email').value.trim();
-    const emailPattern = /\S+@\S+\.\S+/;
-    if (!user.name || !emailPattern.test(user.email) || rooms.length === 0) {
-      return alert("Complete all fields and add at least one room.");
-    }
+  function goToPage3() {
+    if (rooms.length === 0) return alert("Add at least one room.");
     currentRoom = 0;
-    document.getElementById('page1').classList.add('hidden');
-    document.getElementById('page2').classList.remove('hidden');
+    document.getElementById('page2').classList.add('hidden');
+    document.getElementById('page3').classList.remove('hidden');
     renderRoomDimension();
   }
 
-  function backToPage1() {
-    document.getElementById('page2').classList.add('hidden');
-    document.getElementById('page1').classList.remove('hidden');
+  function backToPage2() {
+    document.getElementById('page3').classList.add('hidden');
+    document.getElementById('page2').classList.remove('hidden');
   }
 
   function renderRoomDimension() {
     const r = rooms[currentRoom];
     const u = document.getElementById('unit').value;
     const label = u === 'feet' ? 'ft' : 'm';
+
     const existing = roomData[currentRoom];
     document.getElementById('roomDimensionForm').innerHTML = `
       <h3>${r}</h3>
@@ -189,44 +213,27 @@
       <label>Width (${label})</label><input type="number" id="width" value="${existing.width || ''}">
       <label>Tile Length (${label})</label><input type="number" id="tileLength" value="${existing.tileLength || ''}">
       <label>Tile Width (${label})</label><input type="number" id="tileWidth" value="${existing.tileWidth || ''}">
-      <label>Gap Size</label><input type="number" id="groutSize" value="${existing.groutSize || 0}">
-      <select id="groutUnit">
-        <option value="cm" ${existing.groutUnit === 'cm' ? 'selected' : ''}>centimeters</option>
-        <option value="in" ${existing.groutUnit === 'in' ? 'selected' : ''}>inches</option>
-      </select>
-      <label>Tiles Per Box</label><input type="number" id="tilesPerBox" value="${existing.tilesPerBox || ''}">
+      <label>Tiles per Box</label><input type="number" id="tilesPerBox" value="${existing.tilesPerBox || ''}">
       <button onclick="saveRoomDimension()">Save Room Data</button>
     `;
   }
 
   function saveRoomDimension() {
     const conv = document.getElementById('unit').value === 'feet' ? FEET_TO_METERS : 1;
-    let l = parseFloat(document.getElementById('length').value) * conv || 0;
-    let w = parseFloat(document.getElementById('width').value) * conv || 0;
-    let tl = parseFloat(document.getElementById('tileLength').value) * conv || 0;
-    let tw = parseFloat(document.getElementById('tileWidth').value) * conv || 0;
-    const groutSize = parseFloat(document.getElementById('groutSize').value) || 0;
-    const groutUnit = document.getElementById('groutUnit').value;
-    let groutConverted = groutSize;
-    if (groutUnit === 'cm') groutConverted /= 100;
-    if (groutUnit === 'in') groutConverted *= 0.0254;
-    const adjustedTileLength = tl + groutConverted;
-    const adjustedTileWidth = tw + groutConverted;
-    const tileArea = adjustedTileLength * adjustedTileWidth;
-    const area = l * w;
-    const tilesPerBox = parseInt(document.getElementById('tilesPerBox').value) || 1;
-    const totalTilesNeeded = Math.ceil((area / tileArea) * 1.10);
-    const boxesNeeded = Math.ceil(totalTilesNeeded / tilesPerBox);
+    const l = parseFloat(document.getElementById('length').value) * conv || 0;
+    const w = parseFloat(document.getElementById('width').value) * conv || 0;
+    const tl = parseFloat(document.getElementById('tileLength').value) * conv || 0;
+    const tw = parseFloat(document.getElementById('tileWidth').value) * conv || 0;
+    const tb = parseInt(document.getElementById('tilesPerBox').value) || 0;
+    if (l <= 0 || w <= 0 || tl <= 0 || tw <= 0 || tb <= 0) return alert("Fill all fields with valid numbers.");
 
-    roomData[currentRoom] = { 
-      name: rooms[currentRoom], length: l, width: w, tileLength: tl, tileWidth: tw, groutSize, groutUnit, tilesPerBox, area, tileArea, totalTilesNeeded, boxesNeeded
-    };
+    roomData[currentRoom] = { name: rooms[currentRoom], length: l, width: w, tileLength: tl, tileWidth: tw, tilesPerBox: tb };
 
     currentRoom++;
     if (currentRoom < rooms.length) {
       renderRoomDimension();
     } else {
-      document.getElementById('page2').classList.add('hidden');
+      document.getElementById('page3').classList.add('hidden');
       document.getElementById('previewPage').classList.remove('hidden');
       showPreview();
     }
@@ -241,7 +248,6 @@
         <td>${r.length.toFixed(2)}</td>
         <td>${r.width.toFixed(2)}</td>
         <td>${(r.tileLength*r.tileWidth).toFixed(3)} m²</td>
-        <td>${r.boxesNeeded}</td>
         <td class="action-btn-container">
           <button class="action-btn" onclick="editRoomDimension(${i})">Edit</button>
           <button class="action-btn" onclick="deleteRoom(${i})">Delete</button>
@@ -253,7 +259,7 @@
   function editRoomDimension(index) {
     currentRoom = index;
     document.getElementById('previewPage').classList.add('hidden');
-    document.getElementById('page2').classList.remove('hidden');
+    document.getElementById('page3').classList.remove('hidden');
     renderRoomDimension();
   }
 
@@ -283,21 +289,15 @@
   }
 
   function generateQuotation() {
-    let html = '<table><tr><th>Room</th><th>Area (m²)</th><th>Tile Area (m²)</th><th>Tiles Needed</th><th>Boxes Needed</th></tr>';
-    let total = { area: 0, tiles: 0, boxes: 0 };
+    let html = '<table><tr><th>Room</th><th>Area (m²)</th><th>Total Tiles</th><th>Boxes</th></tr>';
     roomData.forEach(r => {
-      total.area += r.area;
-      total.tiles += r.totalTilesNeeded;
-      total.boxes += r.boxesNeeded;
-      html += `<tr>
-        <td>${r.name}</td>
-        <td>${r.area.toFixed(2)}</td>
-        <td>${r.tileArea.toFixed(3)}</td>
-        <td>${r.totalTilesNeeded}</td>
-        <td>${r.boxesNeeded}</td>
-      </tr>`;
+      const area = r.length * r.width;
+      const tileArea = r.tileLength * r.tileWidth;
+      const totalTiles = Math.ceil((area / tileArea) * 1.10); // 10% waste
+      const boxes = Math.ceil(totalTiles / r.tilesPerBox);
+      html += `<tr><td>${r.name}</td><td>${area.toFixed(2)}</td><td>${totalTiles}</td><td>${boxes}</td></tr>`;
     });
-    html += `<tr><th>Total</th><th>${total.area.toFixed(2)}</th><th>-</th><th>${total.tiles}</th><th>${total.boxes}</th></tr></table>`;
+    html += '</table>';
     document.getElementById('result').innerHTML = html;
   }
 
