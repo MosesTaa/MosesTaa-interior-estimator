@@ -143,7 +143,7 @@
       </thead>
       <tbody></tbody>
     </table>
-    <button onclick="requestQuotation()">Request Quotation (KES 200)</button>
+    <button onclick="requestQuotation()">Request Quotation (KES 10)</button>
   </div>
 
   <!-- Result Page -->
@@ -324,23 +324,23 @@
   }
 
   function requestQuotation() {
-    const handler = PaystackPop.setup({
-      key: 'pk_test_4267eb88afba104984e24dd30e98880042131088',
-      email: user.email,
-      amount: 20000,
-      currency: 'KES',
-      callback: function(response) {
-        document.getElementById('previewPage').classList.add('hidden');
-        document.getElementById('resultSection').classList.remove('hidden');
-        generateQuotation();
-        alert('Payment successful: ' + response.reference);
-      },
-      onClose: function() {
-        alert('Transaction cancelled');
-      }
-    });
-    handler.openIframe();
-  }
+  const handler = PaystackPop.setup({
+    key: 'pk_live_e440f2ef3197a5e86a27bef5c97c388bd6c35bf4', // Live Paystack key
+    email: user.email,
+    amount: 1000, // 10 KES = 1000 kobo
+    currency: 'KES',
+    callback: function(response) {
+      document.getElementById('previewPage').classList.add('hidden');
+      document.getElementById('resultSection').classList.remove('hidden');
+      generateQuotation();
+      alert('Payment successful: ' + response.reference);
+    },
+    onClose: function() {
+      alert('Transaction cancelled');
+    }
+  });
+  handler.openIframe();
+}
 
   function generateQuotation() {
   let html = '<table><tr><th>Room</th><th>Area (m²)</th>';
@@ -409,5 +409,6 @@
 </script>
 </body>
 </html>
+
 
 
