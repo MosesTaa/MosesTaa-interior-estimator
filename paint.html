@@ -92,10 +92,8 @@
   <!-- Page 1 -->
   <div id="page1">
     <h2>Paint Estimator</h2>
-    <label>Full Name</label>
-    <input type="text" id="fullName" placeholder="Enter your name">
-    <label>Email Address</label>
-    <input type="email" id="email" placeholder="Enter your email">
+   <!-- Removed personal info input from here -->
+    
     <label>Project Type</label>
     <select id="projectType">
       <option value="">Select type</option>
@@ -143,6 +141,13 @@
       </thead>
       <tbody></tbody>
     </table>
+    <h3>Quotation Request</h3>
+<p>Please enter your details to proceed with payment. This is required by Paystack for processing.</p>
+<label>Full Name</label>
+<input type="text" id="fullName" placeholder="Enter your full name">
+<label>Email Address</label>
+<input type="email" id="email" placeholder="Enter your email">
+
     <button onclick="requestQuotation()">Request Quotation (KES 10)</button>
   </div>
 
@@ -323,11 +328,22 @@
     showPreview();
   }
 
-  function requestQuotation() {
+function requestQuotation() {
+  const name = document.getElementById('fullName').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const emailPattern = /\S+@\S+\.\S+/;
+
+  if (!name || !emailPattern.test(email)) {
+    return alert("Please enter a valid full name and email to proceed.");
+  }
+
+  user.name = name;
+  user.email = email;
+
   const handler = PaystackPop.setup({
-    key: 'pk_live_e440f2ef3197a5e86a27bef5c97c388bd6c35bf4', // Live Paystack key
+    key: 'pk_live_e440f2ef3197a5e86a27bef5c97c388bd6c35bf4',
     email: user.email,
-    amount: 1000, // 10 KES = 1000 kobo
+    amount: 1000,
     currency: 'KES',
     callback: function(response) {
       document.getElementById('previewPage').classList.add('hidden');
@@ -341,6 +357,7 @@
   });
   handler.openIframe();
 }
+
 
   function generateQuotation() {
   let html = '<table><tr><th>Room</th><th>Area (m²)</th>';
@@ -409,6 +426,7 @@
 </script>
 </body>
 </html>
+
 
 
 
