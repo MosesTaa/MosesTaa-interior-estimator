@@ -170,16 +170,22 @@
   });
 
   function goToPage2() {
-    user.project = document.getElementById('projectType').value;
-    user.skimming = document.getElementById('skimming').value;
+  const project = document.getElementById('projectType').value;
+  const skimmingEl = document.getElementById('skimming');
+  const skimmingVisible = !document.getElementById('skimmingGroup').classList.contains('hidden');
+  const skimming = skimmingVisible ? skimmingEl.value : '';
 
-    if (!user.project || !user.skimming) {
-      return alert("Please select both project type and skimming option.");
-    }
-
-    document.getElementById('page1').classList.add('hidden');
-    document.getElementById('page2').classList.remove('hidden');
+  if (!project || (skimmingVisible && !skimming)) {
+    return alert("Please select all required fields.");
   }
+
+  user.project = project;
+  user.skimming = skimming;
+
+  document.getElementById('page1').classList.add('hidden');
+  document.getElementById('page2').classList.remove('hidden');
+}
+
 
   function backToPage1() {
     document.getElementById('page2').classList.add('hidden');
@@ -267,3 +273,4 @@
 </script>
 </body>
 </html>
+
