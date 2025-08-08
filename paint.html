@@ -224,7 +224,7 @@ function requestQuotation() {
   if (!name || !email) return alert("Please enter your details.");
 
   let handler = PaystackPop.setup({
-    key: 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxx', // Replace with your public key
+    key: 'pk_live_e440f2ef3197a5e86a27bef5c97c388bd6c35bf4', // Live Paystack key
     email: email,
     amount: 10 * 100, // in kobo
     currency: 'KES',
