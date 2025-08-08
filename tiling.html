@@ -3,123 +3,369 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Standard Paint Estimator</title>
+  <title>Tiling Estimator</title>
   <script src="https://js.paystack.co/v1/inline.js"></script>
   <style>
-    body { background: #121212; color: #fff; font-family: Arial, sans-serif; padding: 20px; }
-    h1, h2 { color: #ffcc00; }
-    input, button { padding: 10px; margin: 5px 0; width: 100%; }
-    button { background: #ffcc00; border: none; color: #000; font-weight: bold; cursor: pointer; }
-    button:hover { background: #e6b800; }
+    body {
+      background: #121212;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      width: 95%;
+      max-width: 750px;
+      padding: 20px;
+      margin-top: 20px;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 10px;
+    }
+    h2, h3 {
+      text-align: center;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin: 6px 0 12px 0;
+      background: #2a2a2a;
+      color: #fff;
+      border: 1px solid #444;
+      font-size: 16px;
+      border-radius: 4px;
+    }
     .hidden { display: none; }
-    .room-card { border: 1px solid #444; padding: 10px; margin-top: 10px; border-radius: 5px; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    table { width: 100%; margin-top: 10px; border-collapse: collapse; text-align: center; }
+    th, td { border: 1px solid #555; padding: 8px; word-wrap: break-word; }
+    ul { list-style: none; padding: 0; }
+    ul li {
+      display: flex;
+      justify-content: space-between;
+      background: #2a2a2a;
+      padding: 6px 10px;
+      border-radius: 5px;
+      margin-bottom: 4px;
+      align-items: center;
+    }
+    ul li span button, .action-btn {
+      font-size: 12px;
+      padding: 6px 10px;
+      margin: 4px 2px;
+      border-radius: 4px;
+      background: #fff;
+      color: #000;
+      border: none;
+      cursor: pointer;
+      display: block;
+      width: 100%;
+    }
+    .action-btn-container {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    @media print {
+      button, #restartBtn {
+        display: none !important;
+      }
+      body, .container {
+        background: #fff !important;
+        color: #000 !important;
+      }
+    }
   </style>
 </head>
 <body>
-
-  <h1>Standard Paint Estimator</h1>
-
-  <!-- Step 1: Room Entry -->
-  <div id="room-entry">
-    <h2>Enter Room Details</h2>
-    <label>Room Name:</label>
-    <input type="text" id="roomName" placeholder="e.g., Living Room">
-    <label>Length (m):</label>
-    <input type="number" id="length" placeholder="Length in meters">
-    <label>Width (m):</label>
-    <input type="number" id="width" placeholder="Width in meters">
-    <label>Height (m):</label>
-    <input type="number" id="height" placeholder="Height in meters">
-    <button onclick="saveRoomData()">Save Room Data</button>
-    <button onclick="goToPreview()">Preview Quotation</button>
+<div class="container">
+  <!-- Page 1 -->
+  <div id="page1">
+    <h2>Tiling Estimator</h2>
+    <button onclick="goToPage2()">Next</button>
   </div>
 
-  <!-- Step 2: Preview -->
-  <div id="preview" class="hidden">
-    <h2>Quotation Preview</h2>
-    <div id="roomList"></div>
-    <h3>Total Paint Required: <span id="totalPaint">0</span> Litres</h3>
+  <!-- Page 2: Add Rooms -->
+  <div id="page2" class="hidden">
+    <h2>Add Rooms</h2>
+    <input type="text" id="roomName" placeholder="e.g. Kitchen">
+    <button onclick="addRoom()">Add Room</button>
+    <ul id="roomList"></ul>
+    <button onclick="backToPage1()">Back</button>
+    <button onclick="goToPage3()">Next</button>
+  </div>
+
+  <!-- Page 3: Dimensions -->
+  <div id="page3" class="hidden">
+    <h2>Enter Room Dimensions</h2>
+    <label>Unit</label>
+    <select id="unit">
+      <option value="meters">Meters</option>
+      <option value="feet">Feet</option>
+    </select>
+    <div id="roomDimensionForm"></div>
+    <button onclick="backToPage2()">Back</button>
+  </div>
+
+  <!-- Page 4: Preview -->
+  <div id="previewPage" class="hidden">
+    <h2>Preview</h2>
+    <table id="previewTable">
+      <thead>
+        <tr><th>Room</th><th>Length</th><th>Width</th><th>Tile Size</th><th>Action</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button onclick="backToPage3()">Back</button>
+    <button onclick="goToQuotationPage()">Next</button>
+  </div>
+
+  <!-- Page 5: Request Quotation -->
+  <div id="quotationPage" class="hidden">
+    <h2>Request Quotation</h2>
+    <label for="name">Full Name</label>
+    <input type="text" id="fullName" placeholder="Enter your name">
+    <label for="email">Email Address</label>
+    <input type="email" id="email" placeholder="Enter your email">
     <button onclick="requestQuotation()">Request Quotation (KES 10)</button>
-    <button onclick="backToEntry()">Add More Rooms</button>
+    <button onclick="backToPreview()">Back</button>
   </div>
 
-  <script>
-    let rooms = [];
+  <!-- Page 6: Results -->
+  <div id="resultSection" class="hidden">
+    <h2>Quotation</h2>
+    <div id="result"></div>
+    <button onclick="window.print()">Print</button>
+    <button id="restartBtn" onclick="restartApp()">Make Another</button>
+  </div>
+</div>
 
-    function saveRoomData() {
-      const name = document.getElementById('roomName').value.trim();
-      const length = parseFloat(document.getElementById('length').value);
-      const width = parseFloat(document.getElementById('width').value);
-      const height = parseFloat(document.getElementById('height').value);
+<script>
+  let user = {}, rooms = [], roomData = [], currentRoom = 0;
+  const FEET_TO_METERS = 0.3048;
+  const METERS_TO_FEET = 3.28084;
 
-      if (!name || isNaN(length) || isNaN(width) || isNaN(height)) {
-        alert("Please enter valid room details");
-        return;
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById('unit').addEventListener('change', () => {
+      if (!document.getElementById('page3').classList.contains('hidden')) {
+        convertRoomData();
+        renderRoomDimension();
       }
+    });
+  });
 
-      const wallArea = 2 * height * (length + width);
-      const paintRequired = (wallArea / 10).toFixed(2); // 1 litre covers 10m²
-
-      rooms.push({ name, length, width, height, paintRequired });
-
-      document.getElementById('roomName').value = '';
-      document.getElementById('length').value = '';
-      document.getElementById('width').value = '';
-      document.getElementById('height').value = '';
-
-      alert("Room saved successfully!");
-    }
-
-    function goToPreview() {
-      if (rooms.length === 0) {
-        alert("Please add at least one room first.");
-        return;
+  function convertRoomData() {
+    const oldUnit = roomData[currentRoom]?.unit || 'meters';
+    const newUnit = document.getElementById('unit').value;
+    if (oldUnit === newUnit) return;
+    const factor = newUnit === 'feet' ? METERS_TO_FEET : FEET_TO_METERS;
+    ['length', 'width', 'tileLength', 'tileWidth'].forEach(key => {
+      if (roomData[currentRoom][key]) {
+        roomData[currentRoom][key] *= factor;
       }
-      document.getElementById('room-entry').classList.add('hidden');
-      document.getElementById('preview').classList.remove('hidden');
-      updatePreview();
+    });
+    roomData[currentRoom].unit = newUnit;
+  }
+
+  function goToPage2() {
+    document.getElementById('page1').classList.add('hidden');
+    document.getElementById('page2').classList.remove('hidden');
+  }
+
+  function backToPage1() {
+    document.getElementById('page2').classList.add('hidden');
+    document.getElementById('page1').classList.remove('hidden');
+  }
+
+  function addRoom() {
+    const name = document.getElementById('roomName').value.trim();
+    if (!name || rooms.includes(name)) return alert("Enter a unique room name.");
+    rooms.push(name);
+    roomData.push({ name, unit: document.getElementById('unit').value });
+    renderRooms();
+    document.getElementById('roomName').value = "";
+  }
+
+  function renderRooms() {
+    const list = document.getElementById('roomList');
+    list.innerHTML = "";
+    rooms.forEach((r, i) => {
+      list.innerHTML += `<li>${r}<span>
+        <button onclick="editRoomName(${i})">Edit</button>
+        <button onclick="removeRoom(${i})">Remove</button>
+      </span></li>`;
+    });
+  }
+
+  function removeRoom(i) {
+    rooms.splice(i, 1);
+    roomData.splice(i, 1);
+    renderRooms();
+  }
+
+  function editRoomName(i) {
+    const newName = prompt("Enter new room name", rooms[i]);
+    if (newName && !rooms.includes(newName)) {
+      rooms[i] = newName;
+      roomData[i].name = newName;
+      renderRooms();
     }
+  }
 
-    function backToEntry() {
-      document.getElementById('preview').classList.add('hidden');
-      document.getElementById('room-entry').classList.remove('hidden');
+  function goToPage3() {
+    if (rooms.length === 0) return alert("Add at least one room.");
+    currentRoom = 0;
+    document.getElementById('page2').classList.add('hidden');
+    document.getElementById('page3').classList.remove('hidden');
+    renderRoomDimension();
+  }
+
+  function backToPage2() {
+    document.getElementById('page3').classList.add('hidden');
+    document.getElementById('page2').classList.remove('hidden');
+  }
+
+  function renderRoomDimension() {
+    const r = rooms[currentRoom];
+    const u = document.getElementById('unit').value;
+    const label = u === 'feet' ? 'ft' : 'm';
+    const existing = roomData[currentRoom];
+    document.getElementById('roomDimensionForm').innerHTML = `
+      <h3>${r}</h3>
+      <label>Length (${label})</label><input type="number" id="length" value="${existing.length?.toFixed(2) || ''}">
+      <label>Width (${label})</label><input type="number" id="width" value="${existing.width?.toFixed(2) || ''}">
+      <label>Tile Length (${label})</label><input type="number" id="tileLength" value="${existing.tileLength?.toFixed(2) || ''}">
+      <label>Tile Width (${label})</label><input type="number" id="tileWidth" value="${existing.tileWidth?.toFixed(2) || ''}">
+      <label>Tiles per Box</label><input type="number" id="tilesPerBox" value="${existing.tilesPerBox || ''}">
+      <button onclick="saveRoomDimension()">Save Room Data</button>
+    `;
+  }
+
+  function saveRoomDimension() {
+    const unit = document.getElementById('unit').value;
+    const conv = unit === 'feet' ? FEET_TO_METERS : 1;
+    const l = parseFloat(document.getElementById('length').value) * conv || 0;
+    const w = parseFloat(document.getElementById('width').value) * conv || 0;
+    const tl = parseFloat(document.getElementById('tileLength').value) * conv || 0;
+    const tw = parseFloat(document.getElementById('tileWidth').value) * conv || 0;
+    const tb = parseInt(document.getElementById('tilesPerBox').value) || 0;
+    if (l <= 0 || w <= 0 || tl <= 0 || tw <= 0 || tb <= 0) return alert("Fill all fields with valid numbers.");
+
+    roomData[currentRoom] = {
+      name: rooms[currentRoom], length: l, width: w,
+      tileLength: tl, tileWidth: tw, tilesPerBox: tb,
+      unit
+    };
+
+    currentRoom++;
+    if (currentRoom < rooms.length) {
+      renderRoomDimension();
+    } else {
+      document.getElementById('page3').classList.add('hidden');
+      document.getElementById('previewPage').classList.remove('hidden');
+      showPreview();
     }
+  }
 
-    function updatePreview() {
-      const roomList = document.getElementById('roomList');
-      roomList.innerHTML = '';
-      let totalPaint = 0;
+  function showPreview() {
+    const body = document.querySelector('#previewTable tbody');
+    body.innerHTML = '';
+    roomData.forEach((r, i) => {
+      body.innerHTML += `<tr>
+        <td>${r.name}</td>
+        <td>${r.length.toFixed(2)}</td>
+        <td>${r.width.toFixed(2)}</td>
+        <td>${(r.tileLength*r.tileWidth).toFixed(3)} m²</td>
+        <td class="action-btn-container">
+          <button class="action-btn" onclick="editRoomDimension(${i})">Edit</button>
+          <button class="action-btn" onclick="deleteRoom(${i})">Delete</button>
+        </td>
+      </tr>`;
+    });
+  }
 
-      rooms.forEach((room, index) => {
-        totalPaint += parseFloat(room.paintRequired);
-        roomList.innerHTML += `
-          <div class="room-card">
-            <strong>${room.name}</strong><br>
-            Dimensions: ${room.length}m x ${room.width}m x ${room.height}m<br>
-            Paint Required: ${room.paintRequired} Litres
-          </div>
-        `;
-      });
+  function editRoomDimension(index) {
+    currentRoom = index;
+    document.getElementById('previewPage').classList.add('hidden');
+    document.getElementById('page3').classList.remove('hidden');
+    renderRoomDimension();
+  }
 
-      document.getElementById('totalPaint').textContent = totalPaint.toFixed(2);
+  function deleteRoom(index) {
+    rooms.splice(index, 1);
+    roomData.splice(index, 1);
+    showPreview();
+  }
+
+  function backToPage3() {
+    document.getElementById('previewPage').classList.add('hidden');
+    document.getElementById('page3').classList.remove('hidden');
+  }
+
+  function goToQuotationPage() {
+    document.getElementById('previewPage').classList.add('hidden');
+    document.getElementById('quotationPage').classList.remove('hidden');
+  }
+
+  function backToPreview() {
+    document.getElementById('quotationPage').classList.add('hidden');
+    document.getElementById('previewPage').classList.remove('hidden');
+  }
+
+  function requestQuotation() {
+    user.name = document.getElementById('fullName').value.trim();
+    user.email = document.getElementById('email').value.trim();
+    if (!user.name || !/\S+@\S+\.\S+/.test(user.email)) {
+      return alert("Enter valid name and email.");
     }
+    const handler = PaystackPop.setup({
+      key: 'LIVE_PUBLIC_KEY_HERE', // Replace with your Paystack live public key
+      email: user.email,
+      amount: 1000, // 10 KES
+      currency: 'KES',
+      callback: function(response) {
+        document.getElementById('quotationPage').classList.add('hidden');
+        document.getElementById('resultSection').classList.remove('hidden');
+        generateQuotation();
+        alert('Payment successful: ' + response.reference);
+      },
+      onClose: function() {
+        alert('Transaction cancelled');
+      }
+    });
+    handler.openIframe();
+  }
 
-    function requestQuotation() {
-      let handler = PaystackPop.setup({
-        key: 'pk_live_e440f2ef3197a5e86a27bef5c97c388bd6c35bf4', // Live Paystack key
-        email: 'customer@example.com',
-        amount: 10 * 100, // 10 KES in kobo
-        currency: 'KES',
-        callback: function(response) {
-          alert('Payment successful. Transaction ref is ' + response.reference);
-        },
-        onClose: function() {
-          alert('Transaction was not completed.');
-        }
-      });
-      handler.openIframe();
-    }
-  </script>
+  function generateQuotation() {
+    let html = '<table><tr><th>Room</th><th>Area (m²)</th><th>Total Tiles</th><th>Boxes</th></tr>';
+    roomData.forEach(r => {
+      const area = r.length * r.width;
+      const tileArea = r.tileLength * r.tileWidth;
+      const totalTiles = Math.ceil((area / tileArea) * 1.10);
+      const boxes = Math.ceil(totalTiles / r.tilesPerBox);
+      html += `<tr><td>${r.name}</td><td>${area.toFixed(2)}</td><td>${totalTiles}</td><td>${boxes}</td></tr>`;
+    });
+    html += '</table>';
+    document.getElementById('result').innerHTML = html;
+  }
 
+  function restartApp() {
+    user = {};
+    rooms = [];
+    roomData = [];
+    currentRoom = 0;
+    document.getElementById('resultSection').classList.add('hidden');
+    document.getElementById('page1').classList.remove('hidden');
+    document.getElementById('fullName').value = '';
+    document.getElementById('email').value = '';
+    document.getElementById('roomList').innerHTML = '';
+    document.getElementById('roomName').value = '';
+    document.getElementById('roomDimensionForm').innerHTML = '';
+    document.getElementById('previewTable').querySelector('tbody').innerHTML = '';
+    document.getElementById('result').innerHTML = '';
+  }
+</script>
 </body>
 </html>
